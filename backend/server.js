@@ -1,38 +1,164 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB (using MongoDB Atlas or local)
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/student_management', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB Connected'))
-.catch(err => console.log('MongoDB Connection Error:', err));
+// Remove MongoDB connection for now
+console.log('🚀 Server starting WITHOUT MongoDB...');
 
-// Import Routes
-const authRoutes = require('./routes/auth');
-const studentRoutes = require('./routes/students');
+// Mock data
+const students = [
+  {
+    usn: "1RV20CS001",
+    name: "John Smith",
+    email: "john.smith@college.edu",
+    phone: "9876543210",
+    course: "Computer Science",
+    semester: 5,
+    address: "Bangalore",
+    dob: "2002-05-15",
+    fatherName: "Robert Smith",
+    motherName: "Mary Smith",
+    attendance: "85%",
+    cgpa: "8.9",
+    feesPaid: true
+  },
+  {
+    usn: "1RV20CS002",
+    name: "Emma Johnson",
+    email: "emma.j@college.edu",
+    phone: "8765432109",
+    course: "Computer Science",
+    semester: 5,
+    address: "Bangalore",
+    dob: "2002-08-22",
+    fatherName: "David Johnson",
+    motherName: "Sarah Johnson",
+    attendance: "92%",
+    cgpa: "9.2",
+    feesPaid: true
+  }
+];
 
-// Use Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/students', studentRoutes);
-
-// Sample data endpoint
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Backend is working!' });
+// Routes
+app.get('/', (req, res) => {
+  res.json({
+    message: '✅ Student Management System API',
+    status: 'Running successfully',
+    database: 'Using mock data (no MongoDB)',
+    endpoints: ['/api/students', '/api/students/search/:usn', '/api/auth/login', '/api/health']
+  });
 });
 
-// Start server
+// Get all students
+app.get('/api/students', (req, res) => {
+  res.json({ success: true, count: students.length, students });
+});
+
+// Search student by USN
+app.get('/api/students/search/:usn', (req, res) => {
+  const usn = req.params.usn.toUpperCase();
+  const student = students.find(s => s.usn === usn);
+  
+  if (student) {
+    res.json({ success: true, student });
+  } else {
+    res.status(404).json({ 
+      success: false, 
+      message: `Student with USN ${usn} not found`,
+      suggestion: 'Try: 1RV20CS001 or 1RV20CS002'
+    });
+  }
+});
+
+// Login
+app.post('/api/auth/login', (req, res) => {
+  const { username, password, role } = req.body;
+  
+  const users = {
+    admin: { 
+      username: 'admin', 
+      password: 'admin123', 
+      role: 'admin', 
+      name: 'Admin User' 
+    },
+    teacher: { 
+      username: 'teacher', 
+      password: 'teacher123', 
+      role: 'teacher', 
+      name: 'Teacher User' 
+    },
+    student: { 
+      username: 'student', 
+      password: 'student123', 
+      role: 'student', 
+      name: 'Student User', 
+      usn: '1RV20CS001' 
+    }
+  };
+  
+  const user = users[username];
+  
+  if (user && user.password === password && user.role === role) {
+    res.json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        username: user.username,
+        role: user.role,
+        name: user.name,
+        usn: user.usn,
+        token: 'demo-token-' + Date.now()
+      }
+    });
+  } else {
+    res.status(401).json({ 
+      success: false, 
+      message: 'Invalid credentials',
+      demoAccounts: {
+        admin: 'admin/admin123',
+        teacher: 'teacher/teacher123', 
+        student: 'student/student123'
+      }
+    });
+  }
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: '✅ healthy', 
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    version: '1.0.0',
+    database: 'mock data (no MongoDB needed)'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found',
+    availableRoutes: [
+      'GET /',
+      'GET /api/health',
+      'GET /api/students',
+      'GET /api/students/search/:usn',
+      'POST /api/auth/login'
+    ]
+  });
+});
+
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Access at: http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Access at: http://localhost:${PORT}`);
+  console.log(`📊 API Status: http://localhost:${PORT}/api/health`);
+  console.log(`🎓 Demo USN: 1RV20CS001`);
+  console.log(`👤 Demo login: admin/admin123`);
 });
