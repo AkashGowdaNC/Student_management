@@ -21,7 +21,7 @@ const StudentPanel = ({ user, onLogout }) => {
       const response = await axios.get(`${API_URL}/students/search/${user.usn}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setStudentData(response.data);
+      setStudentData(response.data.student);
     } catch (error) {
       console.error('Error fetching student data:', error);
     } finally {
@@ -247,7 +247,7 @@ const StudentPanel = ({ user, onLogout }) => {
                 </span>
               </div>
             </div>
-            
+
             {!studentData.feesPaid && (
               <div className="payment-options">
                 <h4>Make Payment</h4>

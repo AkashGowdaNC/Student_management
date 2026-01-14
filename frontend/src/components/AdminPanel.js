@@ -30,7 +30,7 @@ const AdminPanel = ({ user, onLogout }) => {
       const response = await axios.get(`${API_URL}/students`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setStudents(response.data);
+      setStudents(response.data.students);
     } catch (error) {
       console.error('Error fetching students:', error);
     } finally {

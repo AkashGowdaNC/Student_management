@@ -1,4 +1,21 @@
 require('dotenv').config();
+
+// Allow Render's domain
+const allowedOrigins = [
+  'https://student-management-frontend.onrender.com',
+  'http://localhost:3000'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
