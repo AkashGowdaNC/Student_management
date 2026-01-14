@@ -12,6 +12,28 @@ function App() {
   const [userRole, setUserRole] = useState('');
   const [userData, setUserData] = useState(null);
 
+  // ADD THIS TEST EFFECT
+  useEffect(() => {
+    console.log('🔍 Testing connection to backend API...');
+    
+    // Test health endpoint
+    fetch('https://student-management-3-9165.onrender.com/api/health')
+      .then(response => response.json())
+      .then(data => {
+        console.log('✅ Backend API is working:', data);
+      })
+      .catch(error => {
+        console.error('❌ Cannot connect to backend API:', error);
+        console.log('📝 Make sure the backend URL is correct: https://student-management-3-9165.onrender.com');
+      });
+      
+    // Test students endpoint
+    fetch('https://student-management-3-9165.onrender.com/api/students')
+      .then(res => res.json())
+      .then(data => console.log('📚 Students data available:', data))
+      .catch(err => console.error('❌ Cannot fetch students:', err));
+  }, []);
+
   useEffect(() => {
     // Check if user is logged in from localStorage
     const token = localStorage.getItem('token');

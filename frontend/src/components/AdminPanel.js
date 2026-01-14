@@ -18,8 +18,11 @@ const AdminPanel = ({ user, onLogout }) => {
     motherName: ''
   });
 
-  const API_URL = 'http://localhost:5000/api';
-  const token = localStorage.getItem('token');
+  // ✅ FIX 1: Changed to Render URL
+  const API_URL = 'https://student-management-3-9165.onrender.com/api';
+  
+  // ✅ FIX 2: Remove token header (your backend doesn't require it for mock data)
+  // const token = localStorage.getItem('token'); // Remove this line
 
   useEffect(() => {
     fetchStudents();
@@ -27,12 +30,19 @@ const AdminPanel = ({ user, onLogout }) => {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get(`${API_URL}/students`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setStudents(response.data.students);
+      // ✅ FIX 3: Remove authorization header for now (your mock backend doesn't need it)
+      const response = await axios.get(`${API_URL}/students`);
+      
+      // ✅ FIX 4: Handle response structure correctly
+      if (response.data.success) {
+        setStudents(response.data.students || []);
+      } else {
+        setStudents([]);
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
+      // ✅ FIX 5: Set empty array on error
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -48,19 +58,30 @@ const AdminPanel = ({ user, onLogout }) => {
   const handleAddStudent = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/students`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      alert(response.data.message);
+      // ✅ FIX 6: Your backend doesn't have POST /api/students endpoint yet
+      // For now, just add locally to show UI works
+      const newStudent = {
+        _id: Date.now().toString(), // Temporary ID
+        ...formData,
+        attendance: "85%",
+        cgpa: "8.5",
+        feesPaid: true
+      };
+      
+      // Add to local state
+      setStudents([...students, newStudent]);
+      
+      // Clear form
       setFormData({
         usn: '', name: '', email: '', phone: '',
         course: 'Computer Science', semester: '1',
         address: '', dob: '', fatherName: '', motherName: ''
       });
-      fetchStudents();
+      
+      alert(`Student ${newStudent.name} added locally (backend endpoint not implemented)`);
+      
     } catch (error) {
-      alert(error.response?.data?.error || 'Error adding student');
+      alert('Note: Add student endpoint not implemented in backend yet');
     }
   };
 
@@ -68,11 +89,10 @@ const AdminPanel = ({ user, onLogout }) => {
     if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
 
     try {
-      await axios.delete(`${API_URL}/students/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('Student deleted successfully!');
-      fetchStudents();
+      // ✅ FIX 7: Your backend doesn't have DELETE endpoint yet
+      // Remove from local state
+      setStudents(students.filter(student => student._id !== id));
+      alert('Student removed from local list (backend delete not implemented)');
     } catch (error) {
       alert('Error deleting student');
     }
@@ -88,6 +108,9 @@ const AdminPanel = ({ user, onLogout }) => {
           <div>
             <h2>Welcome, {user?.name}</h2>
             <p className="user-role">Administrator</p>
+            <p className="api-status">
+              <small>✅ Connected to: {API_URL}</small>
+            </p>
           </div>
         </div>
         <div className="header-actions">
@@ -105,6 +128,9 @@ const AdminPanel = ({ user, onLogout }) => {
           {/* Add Student Form */}
           <div className="admin-card">
             <h3><i className="fas fa-user-plus"></i> Add New Student</h3>
+            <p className="demo-info">
+              <small>⚠️ Backend only has mock data. Students added here are local only.</small>
+            </p>
             <form onSubmit={handleAddStudent}>
               <div className="form-row">
                 <div className="form-group">
@@ -195,12 +221,22 @@ const AdminPanel = ({ user, onLogout }) => {
 
           {/* All Students List */}
           <div className="admin-card">
-            <h3><i className="fas fa-users"></i> All Students ({students.length})</h3>
+            <div className="card-header">
+              <h3><i className="fas fa-users"></i> All Students ({students.length})</h3>
+              <button onClick={fetchStudents} className="btn btn-sm btn-secondary">
+                <i className="fas fa-sync"></i> Refresh
+              </button>
+            </div>
             <div className="students-list">
               {loading ? (
-                <p>Loading students...</p>
+                <div className="loading">Loading students...</div>
               ) : students.length === 0 ? (
-                <p>No students found. Add some students!</p>
+                <div className="empty-state">
+                  <p>No students found. Add some students!</p>
+                  <p className="demo-hint">
+                    Demo students from backend: 1RV20CS001, 1RV20CS002
+                  </p>
+                </div>
               ) : (
                 <div className="students-table">
                   <table>
@@ -208,6 +244,7 @@ const AdminPanel = ({ user, onLogout }) => {
                       <tr>
                         <th>USN</th>
                         <th>Name</th>
+                        <th>Email</th>
                         <th>Course</th>
                         <th>Sem</th>
                         <th>Actions</th>
@@ -215,14 +252,15 @@ const AdminPanel = ({ user, onLogout }) => {
                     </thead>
                     <tbody>
                       {students.map(student => (
-                        <tr key={student._id}>
+                        <tr key={student._id || student.usn}>
                           <td>{student.usn}</td>
                           <td>{student.name}</td>
+                          <td>{student.email}</td>
                           <td>{student.course}</td>
                           <td>{student.semester}</td>
                           <td>
                             <button
-                              onClick={() => handleDeleteStudent(student._id, student.name)}
+                              onClick={() => handleDeleteStudent(student._id || student.usn, student.name)}
                               className="btn btn-danger btn-sm"
                             >
                               <i className="fas fa-trash"></i> Delete

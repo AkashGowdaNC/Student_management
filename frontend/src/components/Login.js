@@ -11,7 +11,8 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = 'http://localhost:5000/api';
+  // ✅ FIXED: Changed to your Render URL
+  const API_URL = 'https://student-management-3-9165.onrender.com/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,24 +26,42 @@ const Login = ({ onLogin }) => {
         role
       });
 
-      onLogin(response.data);
+      console.log('Login response:', response.data); // Add this for debugging
       
-      // Redirect based on role
-      switch(role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'teacher':
-          navigate('/teacher');
-          break;
-        case 'student':
-          navigate('/student');
-          break;
-        default:
-          navigate('/');
+      // Check if response has expected structure
+      if (response.data && response.data.success) {
+        onLogin(response.data);
+        
+        // Redirect based on role
+        switch(role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'teacher':
+            navigate('/teacher');
+            break;
+          case 'student':
+            navigate('/student');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        setError(response.data?.message || 'Invalid response from server');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+      // Improved error handling
+      if (err.response) {
+        // Server responded with error
+        setError(err.response.data?.message || `Error: ${err.response.status}`);
+      } else if (err.request) {
+        // No response received
+        setError('Cannot connect to server. Please check your internet connection.');
+      } else {
+        // Other errors
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -60,6 +79,9 @@ const Login = ({ onLogin }) => {
         <div className="login-header">
           <h1><i className="fas fa-graduation-cap"></i> Student Management System</h1>
           <p>Please login to access your dashboard</p>
+          <p className="api-info">
+            <small>Connected to: {API_URL}</small>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -103,7 +125,9 @@ const Login = ({ onLogin }) => {
             />
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && <div className="alert alert-error">
+            <i className="fas fa-exclamation-triangle"></i> {error}
+          </div>}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
             {loading ? 'Logging in...' : <><i className="fas fa-sign-in-alt"></i> Login</>}
@@ -111,6 +135,7 @@ const Login = ({ onLogin }) => {
 
           <div className="demo-accounts">
             <h3><i className="fas fa-user-secret"></i> Demo Accounts</h3>
+            <p className="demo-hint">Click any account to auto-fill</p>
             <div className="demo-account" onClick={() => fillDemoAccount('admin', 'admin123', 'admin')}>
               <strong>Admin:</strong> admin / admin123
             </div>
