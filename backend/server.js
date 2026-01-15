@@ -64,15 +64,7 @@ const students = [
   }
 ];
 
-// API Routes
-app.get('/', (req, res) => {
-  res.json({
-    message: '✅ Student Management System API',
-    status: 'Running successfully',
-    database: 'Using mock data (no MongoDB)',
-    endpoints: ['/api/students', '/api/students/search/:usn', '/api/auth/login', '/api/health']
-  });
-});
+// ✅ API Routes - PUT THESE FIRST
 
 // Get all students
 app.get('/api/students', (req, res) => {
@@ -159,9 +151,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ✅ Serve React frontend from build folder
-// This MUST come before the 404 handler
+// API info at /api (optional)
+app.get('/api', (req, res) => {
+  res.json({
+    message: '✅ Student Management System API',
+    status: 'Running successfully',
+    database: 'Using mock data (no MongoDB)',
+    endpoints: ['/api/students', '/api/students/search/:usn', '/api/auth/login', '/api/health']
+  });
+});
 
+// ✅ Serve React frontend from build folder
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
@@ -177,7 +177,7 @@ app.use((req, res) => {
     success: false,
     message: 'Route not found',
     availableRoutes: [
-      'GET /',
+      'GET /api',
       'GET /api/health',
       'GET /api/students',
       'GET /api/students/search/:usn',
@@ -194,4 +194,5 @@ app.listen(PORT, () => {
   console.log(`🎓 Demo USN: 1RV20CS001`);
   console.log(`👤 Demo login: admin/admin123`);
   console.log(`🚀 React frontend will be served from: ${path.join(__dirname, '../frontend/build')}`);
+  console.log(`📱 Frontend will be available at: http://localhost:${PORT}/`);
 });
