@@ -2,7 +2,8 @@ require('dotenv').config();
 
 // Allow Render's domain
 const allowedOrigins = [
-  'https://student-management-frontend.onrender.com',
+  'https://student-management-3-9165.onrender.com', // Your combined URL
+  'https://student-management-4-u0vu.onrender.com', // Your static site
   'http://localhost:3000'
 ];
 
@@ -15,14 +16,15 @@ const corsOptions = {
     }
   }
 };
-require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // Added for serving React
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors(corsOptions)); // Use cors with options
 app.use(express.json());
 
 // Remove MongoDB connection for now
@@ -62,7 +64,7 @@ const students = [
   }
 ];
 
-// Routes
+// API Routes
 app.get('/', (req, res) => {
   res.json({
     message: '✅ Student Management System API',
@@ -157,7 +159,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler
+// ✅ Serve React frontend from build folder
+// This MUST come before the 404 handler
+
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// All other GET requests return React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
+
+// 404 handler - This will only be reached if no API routes match
+// and if the React build folder doesn't exist
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -168,7 +182,8 @@ app.use((req, res) => {
       'GET /api/students',
       'GET /api/students/search/:usn',
       'POST /api/auth/login'
-    ]
+    ],
+    note: 'React frontend build folder might be missing'
   });
 });
 
@@ -178,4 +193,5 @@ app.listen(PORT, () => {
   console.log(`📊 API Status: http://localhost:${PORT}/api/health`);
   console.log(`🎓 Demo USN: 1RV20CS001`);
   console.log(`👤 Demo login: admin/admin123`);
+  console.log(`🚀 React frontend will be served from: ${path.join(__dirname, '../frontend/build')}`);
 });
